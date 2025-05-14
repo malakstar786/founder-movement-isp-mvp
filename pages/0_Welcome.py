@@ -70,10 +70,7 @@ def show_welcome():
         
         [Get Started →](?page=1_Dashboard)
         """)
-        
-        # Add a demo video or screenshots
-        st.image("static/demo.png", caption="Founder Movement Tracker Demo")
-        
+    
         # Add testimonials or use cases
         st.markdown("""
         ## Why Use Founder Movement Tracker?
