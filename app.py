@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import logging
 from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 
 from config.logging_config import setup_logging
@@ -71,9 +72,19 @@ def check_api_keys():
     missing_keys = Settings.get_missing_api_keys()
     return len(missing_keys) == 0, missing_keys
 
+def check_setup():
+    """Check if first-time setup is needed"""
+    return (Path(".env").exists() and 
+            Path("credentials/isv-service-account.json").exists())
+
 # Main app
 def main():
     """Main app function"""
+    # Check if first-time setup is needed
+    if not check_setup():
+        st.switch_page("pages/0_Welcome.py")
+        return
+    
     st.title("Founder Movement Tracker")
     st.markdown("Track career changes among pre-seed founders and get AI-powered insights for outreach.")
     
@@ -144,6 +155,14 @@ def main():
     # Show app version
     st.sidebar.markdown(f"**Version:** 0.1.0")
     st.sidebar.markdown(f"**Last Updated:** {datetime.now().strftime('%Y-%m-%d')}")
+    
+    # Add support contact
+    st.sidebar.markdown("""
+    ## Need Help?
+    - Email: support@isvcapital.com
+    - Documentation: [Link to docs]
+    - GitHub Issues: [Link to issues]
+    """)
 
 if __name__ == "__main__":
     main() 
