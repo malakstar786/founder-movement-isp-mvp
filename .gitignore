@@ -38,3 +38,9 @@ ENV/
 
 # Logs
 *.log
+
+# Add to .gitignore
+credentials/
+*.json
+!package.json
+!tsconfig.json
