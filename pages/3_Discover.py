@@ -79,6 +79,11 @@ def search_profiles(keywords, industry=None, location=None, company=None):
             is_founder = serp_api.detect_founder_in_title(job_title)
             profile["is_founder"] = is_founder
             profile["relevance_score"] = 0.9 if is_founder else 0.7
+
+            # Ensure we have a company field for display
+            if "company" not in profile or not profile["company"]:
+                inferred_company = serp_api.parse_company_from_job_title(profile.get("job_title", ""))
+                profile["company"] = inferred_company
         
         # Sort by relevance
         profiles.sort(key=lambda x: x["relevance_score"], reverse=True)
@@ -186,46 +191,74 @@ with st.form("profile_search_form"):
     
     submitted = st.form_submit_button("Search Profiles")
 
-# Process search
+# --- Helper function to render search results --------------------------------
+
+def _render_results(display_results):
+    """Render a list of discovered profiles with tracking actions."""
+    if not display_results:
+        st.info("No profiles found matching your criteria. Try different keywords.")
+        return
+
+    st.success(f"Found {len(display_results)} profiles matching your criteria.")
+
+    # Display summary table
+    results_df = pd.DataFrame([
+        {
+            'Name': r['name'],
+            'Job Title': r['job_title'],
+            'Company': r['company'],
+            'Location': r['location'],
+            'Description': r['description'],
+            'LinkedIn URL': r['link']
+        }
+        for r in display_results
+    ])
+    st.dataframe(
+        results_df[[
+            'Name',
+            'Job Title',
+            'Company',
+            'Location',
+            'Description',
+            'LinkedIn URL',
+        ]],
+        use_container_width=True,
+    )
+
+    # Detailed card per profile
+    for idx, result in enumerate(display_results):
+        with st.expander(f"{result['name']} - {result['job_title']} at {result['company']}"):
+            st.write(f"**Location:** {result['location']}")
+            st.write(f"**Description:** {result['description']}")
+            st.write(f"**LinkedIn URL:** [{result['link']}]({result['link']})")
+            if st.button("Add to Tracking", key=f"add_single_{idx}"):
+                add_to_tracking([result['link']])
+                st.success(f"Added {result['name']} to tracking list.")
+
+    # Bulk add button (outside loop so it appears once)
+    if st.button("Add All to Tracking"):
+        add_to_tracking([r['link'] for r in display_results])
+        st.success("All displayed profiles have been added to your tracking list.")
+
+# --------------------------------------------------------------
+# Process search request and manage result persistence
+
 if submitted:
     if not keywords:
         st.error("Please enter at least one search keyword.")
     else:
         with st.spinner("Searching for LinkedIn profiles..."):
-            results = search_profiles(keywords, industry, location, company)
-        
-        if results:
-            st.success(f"Found {len(results)} profiles matching your criteria.")
-            
-            # Store results in session state
-            st.session_state['search_results'] = results
-            
-            # Display results in a dataframe
-            results_df = pd.DataFrame(results)
-            st.dataframe(
-                results_df[['name', 'job_title', 'company', 'location', 'relevance_score']],
-                use_container_width=True
-            )
-            
-            # Display each result with more detail
-            for i, result in enumerate(results):
-                with st.expander(f"{result['name']} - {result['job_title']} at {result['company']}"):
-                    st.write(f"**Location:** {result['location']}")
-                    st.write(f"**Description:** {result['description']}")
-                    st.write(f"**LinkedIn URL:** {result['link']}")
-                    st.write(f"**Relevance Score:** {result['relevance_score']}")
-                    st.write(f"**Is Founder:** {result['is_founder']}")
-                    
-                    if st.button("Add to Tracking", key=f"add_{i}"):
-                        added_results = add_to_tracking([result])
-                        st.success(f"Added {result['name']} to tracking list.")
-            
-            # Add all to tracking
-            if st.button("Add All to Tracking"):
-                added_results = add_to_tracking(results)
-                st.success(f"Added {added_results['success']} profiles to tracking list.")
-        else:
-            st.info("No profiles found matching your criteria. Try different keywords.")
+            search_outcome = search_profiles(keywords, industry, location, company)
+
+        # Persist and display
+        st.session_state['search_results'] = search_outcome
+        _render_results(search_outcome)
+else:
+    # If the user has not just submitted but we have previous results, show them
+    previous_results = st.session_state.get('search_results', [])
+    if previous_results:
+        st.markdown("### Previous Search Results")
+        _render_results(previous_results)
 
 # Display API usage
 st.subheader("SerpApi Usage")

@@ -111,6 +111,8 @@ with tab1:
         
         if st.button("Process CSV", key="process_csv_button"):
             with st.spinner("Processing CSV file..."):
+                # Reset previous results
+                st.session_state["upload_results"] = None
                 success, message, details = upload_profiles_from_csv(csv_content)
                 st.session_state["upload_results"] = {
                     "success": success,

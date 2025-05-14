@@ -207,7 +207,7 @@ with tab1:
 
 with tab2:
     st.subheader("Recent Founder Transitions")
-    
+
     founder_changes = get_founder_changes(limit=10)
     
     if not founder_changes:

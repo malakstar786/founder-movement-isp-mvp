@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 from typing import Tuple, List, Dict, Any
+from io import StringIO
 
 def validate_linkedin_url(url: str) -> bool:
     """
@@ -54,7 +55,7 @@ def validate_csv_with_linkedin_urls(csv_data: str) -> Tuple[List[str], List[str]
     """
     try:
         # Read CSV data
-        df = pd.read_csv(pd.StringIO(csv_data))
+        df = pd.read_csv(StringIO(csv_data))
         
         # Check if the CSV has a linkedin_url column
         if 'linkedin_url' not in df.columns:

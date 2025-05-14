@@ -94,8 +94,6 @@ def main():
                - Proxycurl API Key (for LinkedIn data)
                - SerpApi Key (for finding profiles)
                - OpenAI API Key (for generating insights)
-               - Google Sheet ID (for storing data)
-               - Upload Google Service Account JSON
             3. Save settings
             
             Once all keys are configured, you'll be able to:

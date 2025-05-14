@@ -50,6 +50,10 @@ class Profile:
         Returns:
         - Profile instance
         """
+        if not data:
+            # Return a default profile with empty values if data is None or empty
+            return cls(linkedin_url="")
+            
         return cls(
             linkedin_url=data.get('linkedin_url', ''),
             first_name=data.get('first_name', ''),
@@ -61,8 +65,8 @@ class Profile:
             last_checked_date=data.get('last_checked_date', None),
             tracking_status=data.get('tracking_status', 'Active'),
             outreach_status=data.get('outreach_status', 'Not contacted'),
-            skills=data.get('skills', []),
-            education=data.get('education', []),
+            skills=data.get('skills', []) or [],
+            education=data.get('education', []) or [],
         )
     
     def to_dict(self) -> Dict[str, Any]:

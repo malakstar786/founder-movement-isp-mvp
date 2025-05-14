@@ -15,10 +15,6 @@ class Settings:
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
     
-    # Google Sheets
-    GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
-    GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "")
-    
     # Application settings
     FOUNDER_KEYWORDS = os.getenv("FOUNDER_KEYWORDS", "Founder,Co-founder,CEO,Chief Executive Officer,Entrepreneur,Creator,Stealth,Building")
     CHECK_FREQUENCY = os.getenv("CHECK_FREQUENCY", "Daily")
@@ -45,16 +41,11 @@ class Settings:
     def has_api_keys(cls) -> bool:
         """
         Check if the required API keys are set
-        
-        Returns:
-        - Boolean indicating if all keys are set
         """
         return all([
             cls.PROXYCURL_API_KEY,
             cls.SERPAPI_API_KEY,
             cls.OPENAI_API_KEY,
-            cls.GOOGLE_SHEET_ID,
-            cls.GOOGLE_SERVICE_ACCOUNT_FILE
         ])
     
     @classmethod
@@ -75,12 +66,6 @@ class Settings:
         
         if not cls.OPENAI_API_KEY:
             missing.append("OpenAI API Key")
-        
-        if not cls.GOOGLE_SHEET_ID:
-            missing.append("Google Sheet ID")
-        
-        if not cls.GOOGLE_SERVICE_ACCOUNT_FILE:
-            missing.append("Google Service Account File")
         
         return missing
     
@@ -122,8 +107,6 @@ class Settings:
             "proxycurl_api_key": cls.PROXYCURL_API_KEY,
             "serpapi_api_key": cls.SERPAPI_API_KEY,
             "openai_api_key": cls.OPENAI_API_KEY,
-            "google_sheet_id": cls.GOOGLE_SHEET_ID,
-            "google_service_account_file": cls.GOOGLE_SERVICE_ACCOUNT_FILE,
             "founder_keywords": cls.FOUNDER_KEYWORDS,
             "check_frequency": cls.CHECK_FREQUENCY,
             "proxycurl_rate_limit": cls.PROXYCURL_RATE_LIMIT,

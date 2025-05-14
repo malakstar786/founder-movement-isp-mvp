@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 
 class SessionStorage:
     """
-    Class to handle in-memory session storage as a replacement for Google Sheets
+    Class to handle in-memory session storage for all application data
     """
     
     @staticmethod
@@ -63,6 +63,7 @@ class SessionStorage:
         """
         SessionStorage.initialize_storage()
         
+        # Search in session storage
         for profile in st.session_state['profiles']:
             if profile.get("linkedin_url") == linkedin_url:
                 return profile
@@ -150,6 +151,7 @@ class SessionStorage:
     @staticmethod
     def clear_storage():
         """Clear all session storage data"""
+        # Reset session state
         if 'profiles' in st.session_state:
             st.session_state['profiles'] = []
         

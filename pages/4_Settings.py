@@ -28,18 +28,28 @@ SessionStorage.initialize_storage()
 
 # Function to save API keys to session state
 def save_api_keys():
-    # Store the API keys in session state
+    """Persist API keys to environment, session state and Settings singleton."""
+    proxy_key = st.session_state.get("proxycurl_api_key", "")
+    serp_key = st.session_state.get("serpapi_api_key", "")
+    openai_key = st.session_state.get("openai_api_key", "")
+
+    # Store in session
     st.session_state["api_keys"] = {
-        "proxycurl_api_key": st.session_state.get("proxycurl_api_key", ""),
-        "serpapi_api_key": st.session_state.get("serpapi_api_key", ""),
-        "openai_api_key": st.session_state.get("openai_api_key", "")
+        "proxycurl_api_key": proxy_key,
+        "serpapi_api_key": serp_key,
+        "openai_api_key": openai_key,
     }
-    
-    # Set environment variables
-    os.environ["PROXYCURL_API_KEY"] = st.session_state.get("proxycurl_api_key", "")
-    os.environ["SERPAPI_API_KEY"] = st.session_state.get("serpapi_api_key", "")
-    os.environ["OPENAI_API_KEY"] = st.session_state.get("openai_api_key", "")
-    
+
+    # Update environment variables for current session
+    os.environ["PROXYCURL_API_KEY"] = proxy_key
+    os.environ["SERPAPI_API_KEY"] = serp_key
+    os.environ["OPENAI_API_KEY"] = openai_key
+
+    # Update Settings so other modules pick up the changes immediately
+    Settings.update_setting("PROXYCURL_API_KEY", proxy_key)
+    Settings.update_setting("SERPAPI_API_KEY", serp_key)
+    Settings.update_setting("OPENAI_API_KEY", openai_key)
+
     st.success("API keys saved successfully!")
 
 # Function to test Proxycurl API
@@ -119,15 +129,15 @@ if "api_keys" in st.session_state:
 api_status_col1, api_status_col2, api_status_col3 = st.columns(3)
 
 with api_status_col1:
-    proxycurl_status = "✅ Configured" if current_proxycurl_key and current_proxycurl_key != "your_proxycurl_api_key_here" else "❌ Not Configured"
+    proxycurl_status = "✅ Configured" if current_proxycurl_key else "❌ Not Configured"
     st.metric(label="Proxycurl API", value=proxycurl_status)
 
 with api_status_col2:
-    serpapi_status = "✅ Configured" if current_serpapi_key and current_serpapi_key != "your_serpapi_key_here" else "❌ Not Configured"
+    serpapi_status = "✅ Configured" if current_serpapi_key else "❌ Not Configured"
     st.metric(label="SerpApi", value=serpapi_status)
 
 with api_status_col3:
-    openai_status = "✅ Configured" if current_openai_key and current_openai_key != "your_openai_api_key_here" else "❌ Not Configured"
+    openai_status = "✅ Configured" if current_openai_key else "❌ Not Configured"
     st.metric(label="OpenAI API", value=openai_status)
 
 # API configuration form
@@ -137,35 +147,31 @@ with st.form("api_config_form"):
     # Hide API keys by default
     show_keys = st.checkbox("Show API Keys")
     
+    # Helper to render API key fields with dynamic visibility
+    def api_key_input(label: str, key_name: str, current_value: str):
+        """Render an API key input field that can toggle between hidden and visible."""
+        input_type = "default" if show_keys else "password"
+        return st.text_input(
+            label,
+            value=current_value,
+            type=input_type,
+            key=key_name,
+        )
+    
     # Proxycurl API
     st.markdown("#### Proxycurl API")
     st.markdown("Used to fetch LinkedIn profile data. [Get an API key here](https://nubela.co/proxycurl/)")
-    proxycurl_api_key = st.text_input(
-        "Proxycurl API Key",
-        value=current_proxycurl_key if show_keys else "•" * 10 if current_proxycurl_key else "",
-        type="default" if show_keys else "password",
-        key="proxycurl_api_key"
-    )
+    proxycurl_api_key = api_key_input("Proxycurl API Key", "proxycurl_api_key", current_proxycurl_key)
     
     # SerpApi
     st.markdown("#### SerpApi")
     st.markdown("Used to discover LinkedIn profiles. [Get an API key here](https://serpapi.com/)")
-    serpapi_api_key = st.text_input(
-        "SerpApi Key",
-        value=current_serpapi_key if show_keys else "•" * 10 if current_serpapi_key else "",
-        type="default" if show_keys else "password",
-        key="serpapi_api_key"
-    )
+    serpapi_api_key = api_key_input("SerpApi Key", "serpapi_api_key", current_serpapi_key)
     
     # OpenAI API
     st.markdown("#### OpenAI API")
     st.markdown("Used to generate insights for outreach. [Get an API key here](https://openai.com/)")
-    openai_api_key = st.text_input(
-        "OpenAI API Key",
-        value=current_openai_key if show_keys else "•" * 10 if current_openai_key else "",
-        type="default" if show_keys else "password",
-        key="openai_api_key"
-    )
+    openai_api_key = api_key_input("OpenAI API Key", "openai_api_key", current_openai_key)
     
     # Submit button
     submitted = st.form_submit_button("Save API Keys")
@@ -209,26 +215,26 @@ with st.expander("Founder Detection Keywords"):
         Settings.FOUNDER_KEYWORDS = new_keywords
         st.success("Keywords updated successfully!")
 
-# Storage management
+# Storage management (in-memory only)
 st.subheader("Storage Management")
 
-# Show current storage stats
 profiles_count = len(SessionStorage.get_all_profiles())
 changes_count = len(SessionStorage.get_all_changes())
 
-stats_col1, stats_col2 = st.columns(2)
+st.markdown("All data is stored in-memory and will be lost when the app is restarted. The app tracks changes within the browser session.")
 
-with stats_col1:
+col_p, col_c = st.columns(2)
+
+with col_p:
     st.metric(label="Tracked Profiles", value=profiles_count)
 
-with stats_col2:
+with col_c:
     st.metric(label="Detected Changes", value=changes_count)
 
-# Clear storage option
 if st.button("Clear All Data", type="primary"):
     SessionStorage.clear_storage()
-    st.success("All data has been cleared from session storage.")
-    st.experimental_rerun()
+    st.success("All in-memory data has been cleared.")
+    st.rerun()
 
 # Add app version info
 st.sidebar.title("About")

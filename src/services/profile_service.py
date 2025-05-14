@@ -7,6 +7,7 @@ from src.api.session_storage import SessionStorage
 from src.models.profile import Profile
 from src.models.change import Change
 from src.utils.validators import validate_linkedin_url
+from src.services.insight_generator import InsightGenerator
 
 # Get logger
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ class ProfileService:
     def __init__(self):
         """Initialize the profile service"""
         self.proxycurl_api = ProxycurlAPI()
+        self.insight_generator = InsightGenerator()
     
     def add_profile(self, linkedin_url: str) -> Tuple[bool, str]:
         """
@@ -44,11 +46,23 @@ class ProfileService:
             # Fetch profile data from Proxycurl
             profile_data = self.proxycurl_api.get_profile(linkedin_url)
             
+            # Check if profile_data is None or has an error
+            if not profile_data:
+                return False, f"Error fetching profile: Received empty response"
+                
             if "error" in profile_data:
                 return False, f"Error fetching profile: {profile_data['error']}"
             
             # Extract relevant data
             extracted_data = self.proxycurl_api.extract_profile_data(profile_data)
+            
+            # Check if extraction was successful
+            if not extracted_data or "error" in extracted_data:
+                error_message = extracted_data.get("error", "Failed to extract profile data") if extracted_data else "Failed to extract profile data"
+                return False, f"Error processing profile: {error_message}"
+            
+            # Ensure we keep the full original LinkedIn URL, not just the public identifier
+            extracted_data["linkedin_url"] = linkedin_url.strip()
             
             # Add to session storage
             success = SessionStorage.add_profile(extracted_data)
@@ -94,11 +108,15 @@ class ProfileService:
             # Extract relevant data
             extracted_data = self.proxycurl_api.extract_profile_data(profile_data)
             
+            # Ensure we keep the full original LinkedIn URL, not just the public identifier
+            extracted_data["linkedin_url"] = linkedin_url.strip()
+            
             # Check for changes
             old_profile = Profile.from_dict(existing_profile)
             new_profile = Profile.from_dict(extracted_data)
             
-            if old_profile.has_changed_roles(existing_profile):
+            # Detect changes by comparing the *new* profile to the previous saved data
+            if new_profile.has_changed_roles(existing_profile):
                 # Create a change object
                 is_founder = new_profile.is_founder()
                 change = Change.from_profile_comparison(
@@ -113,6 +131,15 @@ class ProfileService:
                 
                 # Update the profile
                 SessionStorage.add_profile(extracted_data)
+                
+                # Generate AI insight for founder changes
+                if is_founder:
+                    try:
+                        # Generate insight using OpenAI
+                        insight = self.insight_generator.generate_founder_insight(change, extracted_data)
+                        logger.info(f"Generated insight for founder change: {linkedin_url}")
+                    except Exception as e:
+                        logger.error(f"Error generating insight for {linkedin_url}: {str(e)}")
                 
                 return True, f"Detected role change for {linkedin_url}", change
             else:
