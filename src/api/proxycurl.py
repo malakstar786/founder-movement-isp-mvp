@@ -144,7 +144,7 @@ class ProxycurlAPI:
         url = f"{self.base_url}/linkedin"
         params = {
             "url": linkedin_url,
-            "use_cache": "if-present" if use_cache else "if-recent",
+            "use_cache": "if-recent" if use_cache else "if-present",
             "fallback_to_cache": "never" if fallback_to_cache == "never" else "on-error"
         }
         

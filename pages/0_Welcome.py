@@ -48,7 +48,7 @@ def show_welcome():
                 
                 st.success("Setup completed successfully!")
                 st.balloons()
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Please fill in all required credentials")
     else:
