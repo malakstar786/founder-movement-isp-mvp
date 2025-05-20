@@ -16,7 +16,7 @@ from config.settings import Settings
 from src.api.session_storage import SessionStorage
 from src.api.serpapi import SerpAPI
 from src.api.openai_api import OpenAIAPI
-from src.api.change import Change
+from src.models.change import Change
 from src.api.linkedin_profile import get_linkedin_profile_data
 
 # Load environment variables
