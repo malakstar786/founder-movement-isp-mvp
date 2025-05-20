@@ -52,7 +52,7 @@ class ProfileService:
                 return False, f"Error fetching profile: {error_message}"
             
             # Extract relevant data
-            processed_profile = await self.process_linkedin_profile(linkedin_url, profile_data)
+            processed_profile = await self.process_linkedin_profile(linkedin_url, profile_data.get("data", {}))
             
             if not processed_profile:
                 return False, "Failed to process profile data"
@@ -100,7 +100,7 @@ class ProfileService:
                 return False, f"Error fetching profile: {profile_data['error']}", None
             
             # Extract relevant data
-            processed_profile = await self.process_linkedin_profile(linkedin_url, profile_data)
+            processed_profile = await self.process_linkedin_profile(linkedin_url, profile_data.get("data", {}))
             
             if not processed_profile:
                 return False, "Failed to process profile data", None
