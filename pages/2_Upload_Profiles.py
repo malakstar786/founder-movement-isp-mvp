@@ -191,7 +191,7 @@ with tab2:
         # Add a clear button
         if st.button("Clear Results"):
             st.session_state["manual_entry_results"] = []
-            st.experimental_rerun()
+            st.rerun()
 
 with tab3:
     st.subheader("Text List of URLs")
@@ -264,7 +264,7 @@ if profiles:
     if st.button("Clear All Profiles"):
         SessionStorage.clear_storage()
         st.success("All profiles cleared.")
-        st.experimental_rerun()
+        st.rerun()
 else:
     st.info("No profiles currently being tracked. Use the forms above to add profiles.")
 
