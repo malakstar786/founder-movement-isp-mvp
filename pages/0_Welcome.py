@@ -15,7 +15,7 @@ def show_welcome():
         
         # API Keys Setup
         st.subheader("1. API Keys")
-        proxycurl_key = st.text_input("Proxycurl API Key", type="password")
+        rapidapi_key = st.text_input("RapidAPI Key (for Fresh LinkedIn Profile Data)", type="password")
         serpapi_key = st.text_input("SerpApi Key", type="password")
         openai_key = st.text_input("OpenAI API Key", type="password")
         
@@ -32,10 +32,10 @@ def show_welcome():
         uploaded_file = st.file_uploader("Upload Google Service Account JSON", type=['json'])
         
         if st.button("Complete Setup"):
-            if all([proxycurl_key, serpapi_key, openai_key, uploaded_file]):
+            if all([rapidapi_key, serpapi_key, openai_key, uploaded_file]):
                 # Save API keys to .env
                 env_content = f"""
-                PROXYCURL_API_KEY={proxycurl_key}
+                RAPIDAPI_KEY={rapidapi_key}
                 SERPAPI_KEY={serpapi_key}
                 OPENAI_API_KEY={openai_key}
                 """
@@ -56,7 +56,7 @@ def show_welcome():
         st.markdown("""
         ## Quick Start Guide
         
-        1. **Upload Profiles**
+        1. **Upload Profiles**https://www.linkedin.com/in/imranaly
            - Go to the Upload page
            - Upload a CSV file with LinkedIn URLs
         

@@ -4,12 +4,14 @@ import json
 from dotenv import load_dotenv
 import tempfile
 from datetime import datetime
+import asyncio
 
 from config.settings import Settings
 from src.api.session_storage import SessionStorage
 from src.api.proxycurl import ProxycurlAPI
 from src.api.serpapi import SerpAPI
 from src.api.openai_api import OpenAIAPI
+from src.api.change import Change
 
 # Load environment variables
 load_dotenv()
@@ -115,13 +117,13 @@ def test_openai_api():
 st.subheader("API Configuration")
 
 # Get current API keys from environment
-current_proxycurl_key = os.getenv("PROXYCURL_API_KEY", "")
-current_serpapi_key = os.getenv("SERPAPI_API_KEY", "")
+current_rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
+current_serpapi_key = os.getenv("SERPAPI_KEY", "")
 current_openai_key = os.getenv("OPENAI_API_KEY", "")
 
-# Load API keys from session state if available
-if "api_keys" in st.session_state:
-    current_proxycurl_key = st.session_state["api_keys"].get("proxycurl_api_key", current_proxycurl_key)
+# Load API keys from session state if available (e.g., after a failed save and rerun)
+if "api_keys" in st.session_state: 
+    current_rapidapi_key = st.session_state["api_keys"].get("rapidapi_key", current_rapidapi_key)
     current_serpapi_key = st.session_state["api_keys"].get("serpapi_api_key", current_serpapi_key)
     current_openai_key = st.session_state["api_keys"].get("openai_api_key", current_openai_key)
 
@@ -129,7 +131,7 @@ if "api_keys" in st.session_state:
 api_status_col1, api_status_col2, api_status_col3 = st.columns(3)
 
 with api_status_col1:
-    proxycurl_status = "✅ Configured" if current_proxycurl_key else "❌ Not Configured"
+    proxycurl_status = "✅ Configured" if current_rapidapi_key else "❌ Not Configured"
     st.metric(label="Proxycurl API", value=proxycurl_status)
 
 with api_status_col2:
@@ -158,10 +160,10 @@ with st.form("api_config_form"):
             key=key_name,
         )
     
-    # Proxycurl API
-    st.markdown("#### Proxycurl API")
-    st.markdown("Used to fetch LinkedIn profile data. [Get an API key here](https://nubela.co/proxycurl/)")
-    proxycurl_api_key = api_key_input("Proxycurl API Key", "proxycurl_api_key", current_proxycurl_key)
+    # RapidAPI Key (replaces Proxycurl)
+    st.markdown("#### RapidAPI - Fresh LinkedIn Profile Data")
+    st.markdown("Used to fetch LinkedIn profile data. Get an API key from RapidAPI by subscribing to the 'Fresh LinkedIn Profile Data' API.")
+    rapidapi_key_val = api_key_input("RapidAPI Key", "rapidapi_key", current_rapidapi_key)
     
     # SerpApi
     st.markdown("#### SerpApi")
@@ -177,15 +179,106 @@ with st.form("api_config_form"):
     submitted = st.form_submit_button("Save API Keys")
     
     if submitted:
-        save_api_keys()
+        # Update os.environ before saving, so Settings can pick it up if it re-initializes
+        if rapidapi_key_val:
+            os.environ["RAPIDAPI_KEY"] = rapidapi_key_val
+        if serpapi_api_key:
+            os.environ["SERPAPI_KEY"] = serpapi_api_key
+        if openai_api_key:
+            os.environ["OPENAI_API_KEY"] = openai_api_key
+        
+        Settings.save_api_keys(
+            rapidapi_key=rapidapi_key_val,
+            serpapi_key=serpapi_api_key,
+            openai_api_key=openai_api_key
+        )
+        st.success("API keys saved successfully!")
+        st.rerun()
 
 # Test API connections
 st.subheader("Test API Connections")
 
+# Functions to test API connections (moved before usage for clarity)
+def test_linkedin_api():
+    """Test the RapidAPI LinkedIn connection."""
+    api_key = os.getenv("RAPIDAPI_KEY")
+    if not api_key:
+        st.error("RapidAPI Key is not set.")
+        return
+    
+    test_url = "https://www.linkedin.com/in/satyanadella/" 
+    with st.spinner(f"Testing RapidAPI with {test_url}..."):
+        try:
+            data = asyncio.run(get_linkedin_profile_data(test_url))
+            if data and not data.get("error") and data.get("data"):
+                st.success(f"Successfully fetched data for {data.get('data',{}).get('full_name', 'profile')}")
+            elif data and data.get("error"):
+                st.error(f"RapidAPI Error: {data.get('message')}")
+            else:
+                st.error("RapidAPI test failed. No data or unexpected response.")
+        except Exception as e:
+            st.error(f"RapidAPI test failed: {str(e)}")
+
+def test_serpapi():
+    api_key = os.getenv("SERPAPI_KEY")
+    if not api_key:
+        st.error("SerpApi key is not set!")
+        return
+    
+    serpapi = SerpAPI()
+    result = serpapi.get_usage_info()
+    if "error" in result:
+        st.error(f"Error testing SerpApi: {result['error']}")
+    else:
+        remaining = result.get("plan_searches_left", "unknown")
+        st.success(f"SerpApi is working! Searches remaining: {remaining}")
+
+def test_openai_api():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        st.error("OpenAI API key is not set!")
+        return
+    
+    openai_api = OpenAIAPI()
+    # Dummy data for testing OpenAI API call structure
+    sample_profile_data = {
+        "full_name": "Test Founder",
+        "current_title": "Founder",
+        "current_company": "TestCo",
+        "summary": "Building innovative solutions.",
+        "skills": "AI, SaaS, Product Management",
+        "experiences": [{
+            "title": "Senior PM", "company": "BigTech", 
+            "starts_at": {"year": 2018}, "ends_at": {"year": 2022}
+        }],
+        "education": [{ "school": "Top University", "degree_name": "CS Degree"}]
+    }
+    sample_change_details = {
+        "old_title": "Senior PM", "new_title": "Founder",
+        "old_company": "BigTech", "new_company": "TestCo",
+        "is_founder_change": True
+    }
+    sample_change_obj = Change.from_profile_comparison(
+        linkedin_url="http://linkedin.com/in/testfounder",
+        old_profile=sample_profile_data, # Simplified for test
+        new_profile=sample_profile_data, # Simplified for test
+        is_founder=True
+    )
+    sample_change_obj.old_title = sample_change_details["old_title"]
+    sample_change_obj.new_title = sample_change_details["new_title"]
+
+    with st.spinner("Testing OpenAI API..."):
+        try:
+            analysis = openai_api.generate_founder_insight(sample_change_obj, sample_profile_data)
+            st.success(f"OpenAI API is working! Sample analysis: {analysis}")
+        except Exception as e:
+            st.error(f"Error testing OpenAI API: {str(e)}")
+
 test_col1, test_col2, test_col3 = st.columns(3)
 
 with test_col1:
-    st.button("Test Proxycurl API", on_click=test_proxycurl_api)
+    if st.button("Test LinkedIn Data API (RapidAPI)"):
+        test_linkedin_api()
 
 with test_col2:
     st.button("Test SerpApi", on_click=test_serpapi)

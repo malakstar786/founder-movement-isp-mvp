@@ -5,6 +5,7 @@ import json
 import requests
 from dotenv import load_dotenv
 import random
+import asyncio
 
 from src.api.session_storage import SessionStorage
 from src.services.profile_service import ProfileService
@@ -145,15 +146,15 @@ def get_mock_results(keywords, industry=None, location=None, company=None):
     return mock_results
 
 # Function to add profiles to tracking
-def add_to_tracking(profiles):
+async def add_to_tracking_async(profiles):
     """Add selected profiles to tracking"""
     if isinstance(profiles, list) and all(isinstance(item, str) for item in profiles):
         # URLs only
-        results = profile_service.batch_add_profiles(profiles)
+        results = await profile_service.batch_add_profiles(profiles)
     else:
         # Full profile objects
         linkedin_urls = [p['link'] for p in profiles]
-        results = profile_service.batch_add_profiles(linkedin_urls)
+        results = await profile_service.batch_add_profiles(linkedin_urls)
     
     return results
 
@@ -232,12 +233,12 @@ def _render_results(display_results):
             st.write(f"**Description:** {result['description']}")
             st.write(f"**LinkedIn URL:** [{result['link']}]({result['link']})")
             if st.button("Add to Tracking", key=f"add_single_{idx}"):
-                add_to_tracking([result['link']])
+                asyncio.run(add_to_tracking_async([result['link']]))
                 st.success(f"Added {result['name']} to tracking list.")
 
     # Bulk add button (outside loop so it appears once)
     if st.button("Add All to Tracking"):
-        add_to_tracking([r['link'] for r in display_results])
+        asyncio.run(add_to_tracking_async([r['link'] for r in display_results]))
         st.success("All displayed profiles have been added to your tracking list.")
 
 # --------------------------------------------------------------

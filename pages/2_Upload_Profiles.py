@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from io import StringIO
 import tempfile
 import time
+import asyncio
 
 from config.settings import Settings
 from src.services.profile_service import ProfileService
@@ -38,17 +39,17 @@ def check_api_keys():
     return len(missing_keys) == 0, missing_keys
 
 # Function to validate a single LinkedIn URL
-def validate_and_add_profile(linkedin_url):
+async def validate_and_add_profile_async(linkedin_url):
     """Validate and add a single LinkedIn profile URL"""
     if not validate_linkedin_url(linkedin_url):
         return False, f"Invalid LinkedIn URL format: {linkedin_url}"
     
     # Add profile to tracking
-    success, message = profile_service.add_profile(linkedin_url)
+    success, message = await profile_service.add_profile(linkedin_url)
     return success, message
 
 # Function to add multiple profiles from a CSV file
-def upload_profiles_from_csv(csv_content):
+async def upload_profiles_from_csv_async(csv_content):
     """Process a CSV file and add profiles to tracking"""
     try:
         # Validate CSV content
@@ -61,7 +62,7 @@ def upload_profiles_from_csv(csv_content):
             return False, "No valid LinkedIn URLs found in the CSV.", []
         
         # Add profiles in batch
-        results = profile_service.batch_add_profiles(valid_urls)
+        results = await profile_service.batch_add_profiles(valid_urls)
         
         # Return summary
         success = results["success"] > 0 or results["already_tracked"] > 0
@@ -113,7 +114,8 @@ with tab1:
             with st.spinner("Processing CSV file..."):
                 # Reset previous results
                 st.session_state["upload_results"] = None
-                success, message, details = upload_profiles_from_csv(csv_content)
+                # Call the async version
+                success, message, details = asyncio.run(upload_profiles_from_csv_async(csv_content))
                 st.session_state["upload_results"] = {
                     "success": success,
                     "message": message,
@@ -154,7 +156,8 @@ with tab2:
         
         if submitted and linkedin_url:
             with st.spinner("Adding profile..."):
-                success, message = validate_and_add_profile(linkedin_url)
+                # Call the async version
+                success, message = asyncio.run(validate_and_add_profile_async(linkedin_url))
                 
                 st.session_state["manual_entry_results"].append({
                     "url": linkedin_url,
@@ -222,7 +225,8 @@ with tab3:
                 
                 if valid_urls:
                     # Add valid URLs in batch
-                    results = profile_service.batch_add_profiles(valid_urls)
+                    # Call the async version
+                    results = asyncio.run(profile_service.batch_add_profiles(valid_urls))
                     
                     # Display summary
                     st.success(f"Added {results['success']} new profiles, {results['already_tracked']} already tracked, {results['failed']} failed.")

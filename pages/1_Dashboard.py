@@ -6,13 +6,15 @@ import plotly.express as px
 import datetime
 import random
 from datetime import datetime, timedelta
+import asyncio
 
 from config.settings import Settings
 from src.api.session_storage import SessionStorage
 from src.services.profile_service import ProfileService
 from src.models.profile import Profile
 from src.models.change import Change
-from src.utils.helpers import format_iso_date
+from src.utils.helpers import format_iso_date, check_api_keys
+from src.components.cards import render_change_card
 
 # Load environment variables
 load_dotenv()
@@ -36,9 +38,9 @@ def check_api_keys():
     return len(missing_keys) == 0, missing_keys
 
 # Function to refresh all profiles
-def refresh_all_profiles():
+async def refresh_all_profiles_async():
     with st.spinner("Refreshing all profiles... This may take a minute due to API rate limits."):
-        result = profile_service.batch_refresh_profiles()
+        result = await profile_service.batch_refresh_profiles()
         
         st.session_state["refresh_result"] = result
         st.session_state["last_refresh"] = datetime.now().isoformat()
@@ -119,7 +121,8 @@ with tab1:
     # Action buttons
     col1, col2 = st.columns(2)
     with col1:
-        st.button("Refresh All Profiles", on_click=refresh_all_profiles)
+        if st.button("Refresh All Profiles"):
+            asyncio.run(refresh_all_profiles_async())
     with col2:
         if st.session_state["last_refresh"]:
             last_refresh_time = datetime.fromisoformat(st.session_state["last_refresh"])
