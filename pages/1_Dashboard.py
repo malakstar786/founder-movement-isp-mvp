@@ -21,7 +21,6 @@ from src.services.profile_service import ProfileService
 from src.models.profile import Profile
 from src.models.change import Change
 from src.utils.helpers import format_iso_date
-from src.components.cards import render_change_card
 
 # Load environment variables
 load_dotenv()
