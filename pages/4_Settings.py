@@ -8,10 +8,10 @@ import asyncio
 
 from config.settings import Settings
 from src.api.session_storage import SessionStorage
-from src.api.proxycurl import ProxycurlAPI
 from src.api.serpapi import SerpAPI
 from src.api.openai_api import OpenAIAPI
 from src.api.change import Change
+from src.api.linkedin_profile import get_linkedin_profile_data
 
 # Load environment variables
 load_dotenv()
@@ -31,45 +31,29 @@ SessionStorage.initialize_storage()
 # Function to save API keys to session state
 def save_api_keys():
     """Persist API keys to environment, session state and Settings singleton."""
-    proxy_key = st.session_state.get("proxycurl_api_key", "")
+    rapidapi_key_val = st.session_state.get("rapidapi_key", "")
     serp_key = st.session_state.get("serpapi_api_key", "")
     openai_key = st.session_state.get("openai_api_key", "")
 
     # Store in session
     st.session_state["api_keys"] = {
-        "proxycurl_api_key": proxy_key,
+        "rapidapi_key": rapidapi_key_val,
         "serpapi_api_key": serp_key,
         "openai_api_key": openai_key,
     }
 
     # Update environment variables for current session
-    os.environ["PROXYCURL_API_KEY"] = proxy_key
-    os.environ["SERPAPI_API_KEY"] = serp_key
+    os.environ["RAPIDAPI_KEY"] = rapidapi_key_val
+    os.environ["SERPAPI_KEY"] = serp_key
     os.environ["OPENAI_API_KEY"] = openai_key
 
     # Update Settings so other modules pick up the changes immediately
-    Settings.update_setting("PROXYCURL_API_KEY", proxy_key)
-    Settings.update_setting("SERPAPI_API_KEY", serp_key)
-    Settings.update_setting("OPENAI_API_KEY", openai_key)
-
-    st.success("API keys saved successfully!")
-
-# Function to test Proxycurl API
-def test_proxycurl_api():
-    api_key = st.session_state.get("proxycurl_api_key", "")
-    
-    if not api_key:
-        st.error("Proxycurl API key is not set!")
-        return
-    
-    # Test API
-    proxycurl = ProxycurlAPI()
-    result = proxycurl.get_credit_balance()
-    
-    if "error" in result:
-        st.error(f"Error testing Proxycurl API: {result['error']}")
-    else:
-        st.success(f"Proxycurl API is working! Credits remaining: {result.get('credit_balance', 'unknown')}")
+    Settings.save_api_keys(
+        rapidapi_key=rapidapi_key_val,
+        serpapi_key=serp_key,
+        openai_api_key=openai_key
+    )
+    st.success("API keys updated in session and environment (if changed in form)!")
 
 # Function to test SerpAPI
 def test_serpapi():
@@ -131,8 +115,8 @@ if "api_keys" in st.session_state:
 api_status_col1, api_status_col2, api_status_col3 = st.columns(3)
 
 with api_status_col1:
-    proxycurl_status = "✅ Configured" if current_rapidapi_key else "❌ Not Configured"
-    st.metric(label="Proxycurl API", value=proxycurl_status)
+    rapidapi_status_val = "✅ Configured" if current_rapidapi_key else "❌ Not Configured"
+    st.metric(label="RapidAPI", value=rapidapi_status_val)
 
 with api_status_col2:
     serpapi_status = "✅ Configured" if current_serpapi_key else "❌ Not Configured"
