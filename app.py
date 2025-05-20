@@ -102,7 +102,7 @@ def main():
             
             1. Go to the **Settings** page
             2. Enter your API keys:
-               - Proxycurl API Key (for LinkedIn data)
+               - RapidAPI Key (for Fresh LinkedIn Profile Data)
                - SerpApi Key (for finding profiles)
                - OpenAI API Key (for generating insights)
             3. Save settings
@@ -159,7 +159,7 @@ def main():
     # Add support contact
     st.sidebar.markdown("""
     ## Need Help?
-    - Email: support@isvcapital.com
+    - Email: mgt@malakstar.com
     - Documentation: [Link to docs]
     - GitHub Issues: [Link to issues]
     """)

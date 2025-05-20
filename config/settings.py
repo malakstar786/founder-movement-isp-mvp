@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from typing import List, Dict, Any
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -11,8 +12,8 @@ class Settings:
     """
     
     # API Keys
-    PROXYCURL_API_KEY = os.getenv("PROXYCURL_API_KEY", "")
-    SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")
+    RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
+    SERPAPI_API_KEY = os.getenv("SERPAPI_KEY", "")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
     
     # Application settings
@@ -20,7 +21,6 @@ class Settings:
     CHECK_FREQUENCY = os.getenv("CHECK_FREQUENCY", "Daily")
     
     # API Limits
-    PROXYCURL_RATE_LIMIT = 2  # Max 2 calls per minute on free tier
     SERPAPI_MONTHLY_LIMIT = 100  # Free tier limit
     
     # OpenAI Configuration
@@ -43,7 +43,7 @@ class Settings:
         Check if the required API keys are set
         """
         return all([
-            cls.PROXYCURL_API_KEY,
+            cls.RAPIDAPI_KEY,
             cls.SERPAPI_API_KEY,
             cls.OPENAI_API_KEY,
         ])
@@ -58,8 +58,8 @@ class Settings:
         """
         missing = []
         
-        if not cls.PROXYCURL_API_KEY:
-            missing.append("Proxycurl API Key")
+        if not cls.RAPIDAPI_KEY:
+            missing.append("RapidAPI Key")
         
         if not cls.SERPAPI_API_KEY:
             missing.append("SerpApi Key")
@@ -104,13 +104,53 @@ class Settings:
         - Dictionary of settings
         """
         return {
-            "proxycurl_api_key": cls.PROXYCURL_API_KEY,
+            "rapidapi_key": cls.RAPIDAPI_KEY,
             "serpapi_api_key": cls.SERPAPI_API_KEY,
             "openai_api_key": cls.OPENAI_API_KEY,
             "founder_keywords": cls.FOUNDER_KEYWORDS,
             "check_frequency": cls.CHECK_FREQUENCY,
-            "proxycurl_rate_limit": cls.PROXYCURL_RATE_LIMIT,
             "serpapi_monthly_limit": cls.SERPAPI_MONTHLY_LIMIT,
             "openai_model": cls.OPENAI_MODEL,
             "openai_temperature": cls.OPENAI_TEMPERATURE
         }
+
+    @classmethod
+    def save_api_keys(cls, rapidapi_key: str, serpapi_key: str, openai_api_key: str):
+        """
+        Save API keys to .env file and update current settings.
+        This method ensures that the settings are persisted.
+        """
+        env_path = Path('.') / '.env'
+        
+        # Read existing .env content
+        env_vars = {}
+        if env_path.exists():
+            with open(env_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and '=' in line and not line.startswith('#'):
+                        key, value = line.split('=', 1)
+                        env_vars[key.strip()] = value.strip()
+        
+        # Update with new values
+        if rapidapi_key: env_vars['RAPIDAPI_KEY'] = rapidapi_key
+        if serpapi_key: env_vars['SERPAPI_KEY'] = serpapi_key
+        if openai_api_key: env_vars['OPENAI_API_KEY'] = openai_api_key
+        
+        # Write back to .env
+        with open(env_path, 'w') as f:
+            for key, value in env_vars.items():
+                f.write(f'{key}={value}\\n')
+        
+        # Update current class attributes and os.environ immediately
+        if rapidapi_key:
+            cls.RAPIDAPI_KEY = rapidapi_key
+            os.environ['RAPIDAPI_KEY'] = rapidapi_key
+        if serpapi_key:
+            cls.SERPAPI_KEY = serpapi_key
+            os.environ['SERPAPI_KEY'] = serpapi_key
+        if openai_api_key:
+            cls.OPENAI_API_KEY = openai_api_key
+            os.environ['OPENAI_API_KEY'] = openai_api_key
+        
+        print("API Keys saved to .env and environment updated.")
