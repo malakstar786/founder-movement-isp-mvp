@@ -59,6 +59,7 @@ class ProfileService:
             
             # Add to session storage
             success = SessionStorage.add_profile(processed_profile)
+            print(f"[DEBUG] Stored profile: {processed_profile}")
             
             if success:
                 return True, f"Successfully added profile {linkedin_url} to tracking"
