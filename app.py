@@ -69,8 +69,7 @@ st.markdown("""
 # Function to check API keys
 def check_api_keys():
     """Check if required API keys are set"""
-    missing_keys = Settings.get_missing_api_keys()
-    return len(missing_keys) == 0, missing_keys
+    return Settings.has_api_keys(), Settings.get_missing_api_keys()
 
 def check_setup():
     """Check if first-time setup is needed"""

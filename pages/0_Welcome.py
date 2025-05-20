@@ -43,7 +43,7 @@ def show_welcome():
                 # Save API keys to .env
                 env_content = f"""
                 RAPIDAPI_KEY={rapidapi_key}
-                SERPAPI_KEY={serpapi_key}
+                SERPAPI_API_KEY={serpapi_key}
                 OPENAI_API_KEY={openai_key}
                 """
                 with open(".env", "w") as f:

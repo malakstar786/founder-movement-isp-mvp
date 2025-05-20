@@ -50,7 +50,7 @@ def save_api_keys():
 
     # Update environment variables for current session
     os.environ["RAPIDAPI_KEY"] = rapidapi_key_val
-    os.environ["SERPAPI_KEY"] = serp_key
+    os.environ["SERPAPI_API_KEY"] = serp_key
     os.environ["OPENAI_API_KEY"] = openai_key
 
     # Update Settings so other modules pick up the changes immediately
@@ -108,7 +108,7 @@ st.subheader("API Configuration")
 
 # Get current API keys from environment
 current_rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
-current_serpapi_key = os.getenv("SERPAPI_KEY", "")
+current_serpapi_key = os.getenv("SERPAPI_API_KEY", "")
 current_openai_key = os.getenv("OPENAI_API_KEY", "")
 
 # Load API keys from session state if available (e.g., after a failed save and rerun)
@@ -173,7 +173,7 @@ with st.form("api_config_form"):
         if rapidapi_key_val:
             os.environ["RAPIDAPI_KEY"] = rapidapi_key_val
         if serpapi_api_key:
-            os.environ["SERPAPI_KEY"] = serpapi_api_key
+            os.environ["SERPAPI_API_KEY"] = serpapi_api_key
         if openai_api_key:
             os.environ["OPENAI_API_KEY"] = openai_api_key
         
@@ -210,7 +210,7 @@ def test_linkedin_api():
             st.error(f"RapidAPI test failed: {str(e)}")
 
 def test_serpapi():
-    api_key = os.getenv("SERPAPI_KEY")
+    api_key = os.getenv("SERPAPI_API_KEY")
     if not api_key:
         st.error("SerpApi key is not set!")
         return

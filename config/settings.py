@@ -13,7 +13,7 @@ class Settings:
     
     # API Keys
     RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
-    SERPAPI_API_KEY = os.getenv("SERPAPI_KEY", "")
+    SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
     
     # Application settings
@@ -134,7 +134,7 @@ class Settings:
         
         # Update with new values
         if rapidapi_key: env_vars['RAPIDAPI_KEY'] = rapidapi_key
-        if serpapi_key: env_vars['SERPAPI_KEY'] = serpapi_key
+        if serpapi_key: env_vars['SERPAPI_API_KEY'] = serpapi_key
         if openai_api_key: env_vars['OPENAI_API_KEY'] = openai_api_key
         
         # Write back to .env
@@ -147,8 +147,8 @@ class Settings:
             cls.RAPIDAPI_KEY = rapidapi_key
             os.environ['RAPIDAPI_KEY'] = rapidapi_key
         if serpapi_key:
-            cls.SERPAPI_KEY = serpapi_key
-            os.environ['SERPAPI_KEY'] = serpapi_key
+            cls.SERPAPI_API_KEY = serpapi_key
+            os.environ['SERPAPI_API_KEY'] = serpapi_key
         if openai_api_key:
             cls.OPENAI_API_KEY = openai_api_key
             os.environ['OPENAI_API_KEY'] = openai_api_key
