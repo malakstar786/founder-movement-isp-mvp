@@ -1,3 +1,10 @@
+import sys
+import os
+# Add the project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import streamlit as st
 import pandas as pd
 import os
@@ -13,7 +20,7 @@ from src.api.session_storage import SessionStorage
 from src.services.profile_service import ProfileService
 from src.models.profile import Profile
 from src.models.change import Change
-from src.utils.helpers import format_iso_date, check_api_keys
+from src.utils.helpers import format_iso_date
 from src.components.cards import render_change_card
 
 # Load environment variables
